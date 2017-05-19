@@ -1,7 +1,7 @@
 {
   "name": "castmanager",
   "version": "1.0.0",
-  "description": "castmanager - gerencie e eleja os temas do seu podcast.",
+  "description": "castmanager - manage and elect theme proposals to your podcast.",
   "scripts": {
     "start": "meteor --settings settings-development.json",
     "test": "meteor test --driver-package practicalmeteor:mocha --port 5000",
