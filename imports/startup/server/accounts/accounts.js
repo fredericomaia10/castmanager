@@ -5,14 +5,18 @@ import { configureServices } from '../../../modules/server/services';
 
 configureServices();
 
-Accounts.onCreateUser((options, user) => {
+Accounts.onCreateUser((options, createdUser) => {
   const profile = options.profile;
+  const user = createdUser;
   if (profile) {
     user.profile = profile;
   }
-  if (user.services && user.services.google && user.services.google.email) {
+  const hasGoogleEmailService = user.services && user.services.google
+    && user.services.google.email;
+  const domain = Meteor.settings.public.domain;
+  if (hasGoogleEmailService) {
     user.email = user.services.google.email;
-    if (!_.endsWith(user.email, Meteor.settings.public.company.domain)) {
+    if (domain && !_.endsWith(user.email, domain)) {
       throw new Meteor.Error('500', 'Email não autorizado!');
     }
   }
