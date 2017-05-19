@@ -15,3 +15,5 @@ export const handleError = (error) => {
 export const throwException = (message = 'Erro inesperado!', code = '500') => {
   throw new Meteor.Error(code, message);
 };
+
+export const throwExceptionNotAllowed = () => throwException('Você não possui permissão para esta ação.');

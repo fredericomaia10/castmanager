@@ -1,9 +1,17 @@
 import { Meteor } from 'meteor/meteor';
 import { SimpleSchema } from 'meteor/aldeed:simple-schema';
 import { ValidatedMethod } from 'meteor/mdg:validated-method';
+import Users from '../users/users';
 import PollStatus from '../commons/pollStatus';
 import Polls from './polls';
+import { throwExceptionNotAllowed } from '../../modules/meteor-utils';
 import rateLimit from '../../modules/rate-limit.js';
+
+const checkLoggedUserIsAdmin = () => {
+  if (Users.isNotAdmin(Meteor.userId())) {
+    throwExceptionNotAllowed();
+  }
+};
 
 export const upsertPoll = new ValidatedMethod({
   name: 'polls.upsert',
@@ -14,6 +22,7 @@ export const upsertPoll = new ValidatedMethod({
     proposals: { type: [String], optional: true },
   }).validator(),
   run(poll) {
+    checkLoggedUserIsAdmin();
     if (poll._id) {
       const pollSaved = Polls.findOne(poll._id, { fields: { _id: 1, status: 1 } });
       if (pollSaved) {
@@ -37,6 +46,7 @@ export const startPoll = new ValidatedMethod({
     _id: { type: String },
   }).validator(),
   run({ _id }) {
+    checkLoggedUserIsAdmin();
     const pollSaved = Polls.findOne(_id, { fields: { _id: 1, status: 1 } });
     Polls.validateStatusIsNot(pollSaved, PollStatus.draft.value);
     Polls.update(_id, {
@@ -53,6 +63,7 @@ export const finishPoll = new ValidatedMethod({
     _id: { type: String },
   }).validator(),
   run({ _id }) {
+    checkLoggedUserIsAdmin();
     const pollSaved = Polls.findOne(_id, { fields: { _id: 1, status: 1 } });
     Polls.validateStatusIsNot(pollSaved, PollStatus.started.value);
     Polls.update(_id, {
@@ -69,6 +80,7 @@ export const cancelPoll = new ValidatedMethod({
     _id: { type: String },
   }).validator(),
   run({ _id }) {
+    checkLoggedUserIsAdmin();
     const pollSaved = Polls.findOne(_id, { fields: { _id: 1, status: 1 } });
     Polls.validateStatusIs(pollSaved, PollStatus.finished.value);
     Polls.update(_id, {
@@ -98,7 +110,7 @@ export const voteProposal = new ValidatedMethod({
 });
 
 rateLimit({
-  methods: [upsertPoll, cancelPoll],
+  methods: [upsertPoll, cancelPoll, finishPoll, startPoll, voteProposal],
   limit: 5,
   timeRange: 1000,
 });
