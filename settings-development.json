@@ -1,0 +1,31 @@
+{
+  "public": {
+    "company": "Tecsinapse",
+    "company.domain": "@tecsinapse.com.br",
+    "categories": {
+      "tecnico": "Técnico",
+      "nao-tecnico": "Não Técnico"
+    }
+  },
+  "private": {
+    "oAuth": {
+      "facebook": {
+        "appId": "",
+        "secret": ""
+      },
+      "github": {
+        "clientId": "",
+        "secret": ""
+      },
+      "google": {
+        "clientId": "1056714673397-gspau1gs5mrmtn4qdrl4lgoin9f7vgfl.apps.googleusercontent.com",
+        "secret": "BqNKipP3W0avp-LZXMTSKniW"
+      }
+    }
+  },
+  "AWSAccessKeyId": "",
+  "AWSSecretAccessKey": "",
+  "AWSBucket": "",
+  "AWSRegion": "",
+  "MAIL_URL": ""
+}
