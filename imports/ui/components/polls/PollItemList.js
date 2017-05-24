@@ -4,9 +4,8 @@ import { ButtonToolbar, ButtonGroup, Button, Row, Col, ListGroupItem, ListGroup 
 import { Bert } from 'meteor/themeteorchef:bert';
 import StatusPoll from './StatusPoll';
 import { cancelPoll, startPoll, finishPoll, voteProposal } from '../../../api/polls/methods.js';
-import PollStatus from '../../../api/commons/pollStatus.js';
 import { formatDate } from '../../../modules/utils';
-import { loggedUserId, handleError } from '../../../modules/meteor-utils';
+import { handleError } from '../../../modules/meteor-utils';
 
 const handleEdit = _id => browserHistory.push(`/polls/${_id}/edit`);
 
@@ -68,6 +67,12 @@ const PollItemList = ({ poll, proposals }) => (
           </span>
         <StatusPoll poll={ poll } />
       </p>
+      <p>
+        <Button onClick={ () => handleStartPoll(poll._id) }
+                className={ poll.canStart() ? '' : 'hidden' }>Iniciar votação</Button>
+        <Button onClick={ () => handleFinishPoll(poll._id) }
+                className={ poll.canFinish() ? '' : 'hidden' }>Encerrar votação</Button>
+      </p>
       <ListGroup>
         {poll.proposals.map((p) => {
           const proposal = proposals.find(prop => prop._id === p._id);
@@ -75,29 +80,20 @@ const PollItemList = ({ poll, proposals }) => (
             <ListGroupItem key={ p._id }>
               {`${proposal.title} (${p.numberOfVotes} votos)`}
               <Button bsSize="xsmall" bsStyle="primary"
-                      className={ poll.status !== PollStatus.started.value ?
-                        'pull-right hidden' : 'pull-right' }
+                      className={ !poll.isStarted() ? 'pull-right hidden' : 'pull-right' }
                       onClick={ () => handleVote(poll._id, proposal._id) }>Votar</Button>
             </ListGroupItem>
           );
         })}
       </ListGroup>
-      <p>
-        <Button onClick={ () => handleStartPoll(poll._id) }
-                className={ poll.status !== PollStatus.draft.value ? 'hidden' : '' }>Iniciar votação</Button>
-        <Button onClick={ () => handleFinishPoll(poll._id) }
-                className={ poll.status !== PollStatus.started.value ? 'hidden' : '' }>Encerrar votação</Button>
-      </p>
     </Col>
     <Col md={ 3 }>
       <ButtonToolbar className="pull-right">
         <ButtonGroup bsSize="small">
           <Button onClick={ () => handleEdit(poll._id) }
-                  disabled={ loggedUserId() !== poll.userId }>Editar</Button>
+                  disabled={ !poll.isEditable() }>Editar</Button>
           <Button onClick={ () => handleCancel(poll._id) }
-                  disabled={ loggedUserId() !== poll.userId ||
-                  poll.status === PollStatus.finished.value ||
-                  poll.status === PollStatus.canceled.value}
+                  disabled={ !poll.isCancelable() }
                   bsStyle="danger">Cancelar</Button>
         </ButtonGroup>
       </ButtonToolbar>

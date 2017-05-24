@@ -38,3 +38,4 @@ random@1.0.10
 browser-policy@1.1.0
 accounts-google@1.1.2
 service-configuration@1.0.11
+dburles:collection-helpers

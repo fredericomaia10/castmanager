@@ -1,7 +1,7 @@
 {
   "public": {
     "company": "Tecsinapse",
-    "domain": "@tecsinapse.com.br",
+    "domain": "",
     "categories": {
       "tecnico": "Técnico",
       "nao-tecnico": "Não Técnico"
@@ -18,8 +18,8 @@
         "secret": ""
       },
       "google": {
-        "clientId": "",
-        "secret": ""
+        "clientId": "1056714673397-gspau1gs5mrmtn4qdrl4lgoin9f7vgfl.apps.googleusercontent.com",
+        "secret": "BqNKipP3W0avp-LZXMTSKniW"
       }
     }
   },

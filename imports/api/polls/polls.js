@@ -1,3 +1,4 @@
+import { Meteor } from 'meteor/meteor';
 import { Mongo } from 'meteor/mongo';
 import { SimpleSchema } from 'meteor/aldeed:simple-schema';
 import MetaSchema from '../commons/metaSchema';
@@ -42,6 +43,39 @@ Polls.schema = new SimpleSchema([MetaSchema, {
   },
 }]);
 
+Polls.helpers({
+  isStatus(status) {
+    return this.status === status.value;
+  },
+  isDraft() {
+    return this.isStatus(PollStatus.draft);
+  },
+  isStarted() {
+    return this.isStatus(PollStatus.started);
+  },
+  isCanceled() {
+    return this.isStatus(PollStatus.canceled);
+  },
+  isFinished() {
+    return this.isStatus(PollStatus.finished);
+  },
+  loggedUserIsOwner() {
+    return Meteor.userId() === this.userId;
+  },
+  isEditable() {
+    return this.loggedUserIsOwner() && this.isDraft();
+  },
+  isCancelable() {
+    return this.loggedUserIsOwner() && !this.isFinished() && !this.isCanceled();
+  },
+  canStart() {
+    return this.loggedUserIsOwner() && this.isDraft();
+  },
+  canFinish() {
+    return this.loggedUserIsOwner() && this.isStarted();
+  },
+});
+
 Polls.getProposalIds = polls => polls.map(poll => poll.proposals)
   .reduce((previous, current) => previous.concat(current))
   .map(proposal => proposal._id);
@@ -50,7 +84,7 @@ Polls.voteProposal = (poll, proposalId, userId) => {
   const usersIds = poll.proposals
     .map(p => p.usersIds)
     .filter(u => u.length > 0)
-    .reduce((previous, current) => previous.concat(current));
+    .reduce((previous, current) => previous.concat(current), []);
   const userAlreadyVoted = usersIds.find(u => u === userId);
   if (userAlreadyVoted) {
     throwException('Você já efetuou seu voto.');
