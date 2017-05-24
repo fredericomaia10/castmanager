@@ -1,6 +1,7 @@
 import { SimpleSchema } from 'meteor/aldeed:simple-schema';
 import { ValidatedMethod } from 'meteor/mdg:validated-method';
 import Proposals from './proposals';
+import ProposalStatus from '../commons/proposalStatus';
 import rateLimit from '../../modules/rate-limit.js';
 
 export const upsertProposal = new ValidatedMethod({
@@ -13,6 +14,7 @@ export const upsertProposal = new ValidatedMethod({
     timeInMinutes: { type: Number, optional: true },
   }).validator(),
   run(proposal) {
+    proposal.status = ProposalStatus.open.value;
     return Proposals.upsert({ _id: proposal._id }, { $set: proposal });
   },
 });

@@ -4,6 +4,7 @@ import { Meteor } from 'meteor/meteor';
 import { browserHistory } from 'react-router';
 import { Bert } from 'meteor/themeteorchef:bert';
 import { upsertProposal } from '../api/proposals/methods.js';
+import { handleError } from './meteor-utils';
 import { stringToInt } from '../modules/utils.js';
 import './validation.js';
 
@@ -23,7 +24,7 @@ const handleUpsert = () => {
 
   upsertProposal.call(upsert, (error) => {
     if (error) {
-      Bert.alert(error.reason, 'danger');
+      handleError(error);
     } else {
       component.proposalEditorForm.reset();
       Bert.alert(confirmation, 'success');

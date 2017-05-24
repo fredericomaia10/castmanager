@@ -12,7 +12,7 @@ const composer = ({ params }, onData) => {
   const proposalsStatus = Enums.getOptions(ProposalStatus);
   if (subscription.ready()) {
     const doc = Proposals.findOne(params._id);
-    onData(null, { doc, pollsStatus });
+    onData(null, { doc, proposalsStatus });
   }
 };
 

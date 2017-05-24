@@ -4,6 +4,7 @@ import { browserHistory } from 'react-router';
 import { Bert } from 'meteor/themeteorchef:bert';
 import { upsertPoll } from '../api/polls/methods.js';
 import { stringToDate } from '../modules/utils.js';
+import { handleError } from './meteor-utils';
 import './validation.js';
 
 let component;
@@ -23,7 +24,7 @@ const handleUpsert = () => {
 
   upsertPoll.call(pollUpsert, (error) => {
     if (error) {
-      Bert.alert(error.reason, 'danger');
+      handleError(error);
     } else {
       component.proposalEditorForm.reset();
       Bert.alert(confirmation, 'success');

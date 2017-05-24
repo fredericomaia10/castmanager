@@ -6,7 +6,7 @@ import Enums from '../../../api/commons/enums';
 
 const composer = ({ params }, onData) => {
   const proposalsStatus = Enums.getOptions(ProposalStatus);
-  onData(null, { pollsStatus });
+  onData(null, { proposalsStatus });
 };
 
 export default composeWithTracker(composer, Loading)(NewProposal);
