@@ -3,6 +3,7 @@ import { Mongo } from 'meteor/mongo';
 import { SimpleSchema } from 'meteor/aldeed:simple-schema';
 import MetaSchema from '../commons/metaSchema';
 import Enums from '../commons/enums';
+import Users from '../users/users';
 import PollStatus from '../commons/pollStatus';
 import { throwException } from '../../modules/meteor-utils';
 
@@ -63,16 +64,16 @@ Polls.helpers({
     return Meteor.userId() === this.userId;
   },
   isEditable() {
-    return this.loggedUserIsOwner() && this.isDraft();
+    return Users.isLoggedUserAdmin() && this.isDraft();
   },
   isCancelable() {
-    return this.loggedUserIsOwner() && !this.isFinished() && !this.isCanceled();
+    return Users.isLoggedUserAdmin() && !this.isFinished() && !this.isCanceled();
   },
   canStart() {
-    return this.loggedUserIsOwner() && this.isDraft();
+    return Users.isLoggedUserAdmin() && this.isDraft();
   },
   canFinish() {
-    return this.loggedUserIsOwner() && this.isStarted();
+    return Users.isLoggedUserAdmin() && this.isStarted();
   },
 });
 

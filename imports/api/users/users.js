@@ -14,6 +14,12 @@ _.extend(Users, {
   isAdmin(userId) {
     return Roles.userIsInRole(userId, ['admin']);
   },
+  isNotLoggedUserAdmin() {
+    return !this.isLoggedUserAdmin();
+  },
+  isLoggedUserAdmin() {
+    return Roles.userIsInRole(Meteor.userId(), ['admin']);
+  },
 });
 
 export default Users;

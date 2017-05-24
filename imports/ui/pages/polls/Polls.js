@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router';
 import { Row, Col, Button } from 'react-bootstrap';
 import PollsList from '../../containers/polls/PollsList.js';
+import Users from '../../../api/users/users';
 
 export default class Polls extends React.Component {
   constructor(props) {
@@ -17,7 +18,8 @@ export default class Polls extends React.Component {
             <div className="page-header clearfix">
               <h4 className="pull-left">Votações</h4>
               <Link to="/polls/new">
-                <Button bsStyle="success" className="pull-right">Nova Votação</Button>
+                <Button className={ Users.isNotLoggedUserAdmin() ? 'hidden' : 'pull-right'}
+                        bsStyle="success">Nova Votação</Button>
               </Link>
             </div>
             <PollsList />
