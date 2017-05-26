@@ -75,10 +75,14 @@ Polls.helpers({
   canFinish() {
     return Users.isLoggedUserAdmin() && this.isStarted();
   },
+  higgestVotedProposals() {
+    const higgestVote = Math.max(...this.proposals.map(p => p.numberOfVotes));
+    return this.proposals.filter(p => p.numberOfVotes === higgestVote);
+  },
 });
 
 Polls.getProposalIds = polls => polls.map(poll => poll.proposals)
-  .reduce((previous, current) => previous.concat(current))
+  .reduce((previous, current) => previous.concat(current), [])
   .map(proposal => proposal._id);
 
 Polls.voteProposal = (poll, proposalId, userId) => {
@@ -117,15 +121,15 @@ Polls.changeVoteProposal = (poll, proposalId, userId) => {
   }
 };
 
-Polls.validateStatusIs = (poll, status) => {
-  if (poll && poll.status === status) {
+Polls.validateStatusIsNot = (poll, status) => {
+  if (poll && poll.status === status.value) {
     const statusFound = Enums.getLabelByValue(PollStatus, poll.status);
     throwException(`Ação não permitida. Votação com status ${statusFound}.`);
   }
 };
 
-Polls.validateStatusIsNot = (poll, status) => {
-  if (poll && poll.status !== status) {
+Polls.validateStatusIs = (poll, status) => {
+  if (poll && poll.status !== status.value) {
     const statusFound = Enums.getLabelByValue(PollStatus, poll.status);
     throwException(`Ação não permitida. Votação com status ${statusFound}.`);
   }

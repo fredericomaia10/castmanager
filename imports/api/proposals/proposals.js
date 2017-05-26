@@ -53,6 +53,24 @@ Proposals.findOneWithCategoryLabel = (_id) => {
   return proposal;
 };
 
+Proposals.helpers({
+  isStatus(status) {
+    return this.status === status.value;
+  },
+  isOpen() {
+    return this.isStatus(ProposalStatus.open);
+  },
+  isVoting() {
+    return this.isStatus(ProposalStatus.voting);
+  },
+  isCanceled() {
+    return this.isStatus(ProposalStatus.canceled);
+  },
+  isElected() {
+    return this.isStatus(ProposalStatus.elected);
+  },
+});
+
 export default Proposals;
 
 Proposals.attachSchema(Proposals.schema);

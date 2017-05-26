@@ -17,3 +17,9 @@ export const throwException = (message = 'Erro inesperado!', code = '500') => {
 };
 
 export const throwExceptionNotAllowed = () => throwException('Você não possui permissão para esta ação.');
+
+export const throwExceptionIf = (functionIf, message) => {
+  if (functionIf()) {
+    throwException(message);
+  }
+};

@@ -4,7 +4,8 @@ import { ValidatedMethod } from 'meteor/mdg:validated-method';
 import Users from '../users/users';
 import PollStatus from '../commons/pollStatus';
 import Polls from './polls';
-import { throwExceptionNotAllowed } from '../../modules/meteor-utils';
+import { changeProposalsToVoting, changeProposalsToOpen, changeProposalsToElected } from '../proposals/methods';
+import { throwExceptionNotAllowed, throwException, throwExceptionIf } from '../../modules/meteor-utils';
 import rateLimit from '../../modules/rate-limit.js';
 
 const checkLoggedUserIsAdmin = () => {
@@ -26,7 +27,7 @@ export const upsertPoll = new ValidatedMethod({
     if (poll._id) {
       const pollSaved = Polls.findOne(poll._id, { fields: { _id: 1, status: 1 } });
       if (pollSaved) {
-        Polls.validateStatusIsNot(pollSaved, PollStatus.draft.value);
+        Polls.validateStatusIs(pollSaved, PollStatus.draft);
       }
     }
     const pollUpsert = {
@@ -40,6 +41,13 @@ export const upsertPoll = new ValidatedMethod({
   },
 });
 
+const changeStatusTo = (pollId, status) => Polls.update({ _id: pollId }, {
+  $set: {
+    status: status.value,
+  },
+});
+
+// TODO checar todos os métodos de sart, cancel e finish
 export const startPoll = new ValidatedMethod({
   name: 'polls.start',
   validate: new SimpleSchema({
@@ -47,13 +55,17 @@ export const startPoll = new ValidatedMethod({
   }).validator(),
   run({ _id }) {
     checkLoggedUserIsAdmin();
-    const pollSaved = Polls.findOne(_id, { fields: { _id: 1, status: 1 } });
-    Polls.validateStatusIsNot(pollSaved, PollStatus.draft.value);
-    Polls.update(_id, {
-      $set: {
-        status: PollStatus.started.value,
-      },
-    });
+    const fields = { _id: 1, status: 1, proposals: 1 };
+    const pollSaved = Polls.find(_id, { fields }).fetch()[0];
+    if (!pollSaved) {
+      throwException('Votação não encontrada.');
+    }
+    Polls.validateStatusIs(pollSaved, PollStatus.draft);
+    const proposalIds = Polls.getProposalIds([pollSaved]);
+    if (changeProposalsToVoting.call({ proposalIds })) {
+      return changeStatusTo(_id, PollStatus.started);
+    }
+    return false;
   },
 });
 
@@ -64,13 +76,31 @@ export const finishPoll = new ValidatedMethod({
   }).validator(),
   run({ _id }) {
     checkLoggedUserIsAdmin();
-    const pollSaved = Polls.findOne(_id, { fields: { _id: 1, status: 1 } });
-    Polls.validateStatusIsNot(pollSaved, PollStatus.started.value);
-    Polls.update(_id, {
-      $set: {
-        status: PollStatus.finished.value,
-      },
-    });
+    const fields = { _id: 1, status: 1, proposals: 1 };
+    const pollSaved = Polls.find(_id, { fields }).fetch()[0];
+    if (!pollSaved) {
+      throwException('Votação não encontrada.');
+    }
+    const proposalVotes = pollSaved.proposals.map(p => p.numberOfVotes);
+    if (proposalVotes.every(votes => votes === 0)) {
+      throwException('Votação sem votos não pode ser encerrada. Faça o cancelamento.');
+    }
+    Polls.validateStatusIs(pollSaved, PollStatus.started);
+    const proposalIds = Polls.getProposalIds([pollSaved]);
+    if (changeProposalsToOpen.call({ proposalIds })) {
+      const higgestVotedProposals = pollSaved.higgestVotedProposals();
+      throwExceptionIf(() => higgestVotedProposals.length > 1, 'Votação empatada.');
+      const proposalId = higgestVotedProposals[0]._id;
+      if (changeProposalsToElected.call({ proposalIds: [proposalId] })) {
+        return Polls.update(_id, {
+          $set: {
+            status: PollStatus.finished.value,
+            proposalWinningId: proposalId,
+          },
+        });
+      }
+    }
+    return false;
   },
 });
 
@@ -81,13 +111,15 @@ export const cancelPoll = new ValidatedMethod({
   }).validator(),
   run({ _id }) {
     checkLoggedUserIsAdmin();
-    const pollSaved = Polls.findOne(_id, { fields: { _id: 1, status: 1 } });
-    Polls.validateStatusIs(pollSaved, PollStatus.finished.value);
-    Polls.update(_id, {
-      $set: {
-        status: PollStatus.canceled.value,
-      },
-    });
+    const fields = { _id: 1, status: 1, proposals: 1 };
+    const pollSaved = Polls.find(_id, { fields }).fetch()[0];
+    throwExceptionIf(() => !pollSaved, 'Votação não encontrada.');
+    Polls.validateStatusIsNot(pollSaved, PollStatus.finished);
+    const proposalIds = Polls.getProposalIds([pollSaved]);
+    if (changeProposalsToOpen.call({ proposalIds })) {
+      return changeStatusTo(_id, PollStatus.canceled);
+    }
+    return false;
   },
 });
 
@@ -98,10 +130,12 @@ export const voteProposal = new ValidatedMethod({
     proposalId: { type: String },
   }).validator(),
   run({ pollId, proposalId }) {
-    const pollSaved = Polls.findOne(pollId, { fields: { _id: 1, status: 1, proposals: 1 } });
-    Polls.validateStatusIsNot(pollSaved, PollStatus.started.value);
+    const fields = { _id: 1, status: 1, proposals: 1 };
+    const pollSaved = Polls.find(pollId, { fields }).fetch()[0];
+    throwExceptionIf(() => !pollSaved, 'Votação não encontrada.');
+    Polls.validateStatusIs(pollSaved, PollStatus.started);
     Polls.voteProposal(pollSaved, proposalId, Meteor.user()._id);
-    Polls.update(pollId, {
+    return Polls.update(pollId, {
       $set: {
         proposals: pollSaved.proposals,
       },
